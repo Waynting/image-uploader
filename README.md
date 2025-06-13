@@ -22,7 +22,7 @@
 
 使用以下 Shortcode 插入圖片：
 ```
-[img file="Photos/XXX.jpg"]
+[img file="相對wp-content的連結"]
 ```
 以上
 歡迎大家自行取用

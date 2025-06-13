@@ -27,6 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo_uploads'])) {
         $safe_name = basename($name);
         $save_path = $target_path . '/' . $safe_name;
 
+        if (file_exists($save_path)) {
+             echo "<p style='color:orange;'>⚠️ 檔案 <strong>$safe_name</strong> 已存在，已跳過。</p>";
+            continue;
+        }
+
         // 圖片壓縮成 JPG
         $src = ($ext === 'png') ? imagecreatefrompng($tmp) : imagecreatefromjpeg($tmp);
         imagejpeg($src, $save_path, 75);
@@ -48,7 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo_uploads'])) {
     <input type="file" name="photo_uploads[]" accept="image/*" multiple required><br><br>
 
     <label><strong>儲存至資料夾：</strong>（相對於 wp-content）</label><br>
-    <input type="text" name="target_folder" list="folder_suggestions" value="custom-photos/project-01" style="width:300px;" required>
+    <input type="text" name="target_folder" list="folder_suggestions" value="photos" style="width:300px;" required>
+    echo '<label><strong>JPEG 壓縮比例（10～100）：</strong></label><br>';
+    echo '<input type="number" name="quality" min="10" max="100" value="75" style="width:100px;" required><br><br>';
+
     <datalist id="folder_suggestions">
         <?php foreach ($existing_folders as $folder): ?>
             <option value="<?php echo esc_attr($folder); ?>"></option>

@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: Image Uploader
-Description: 從 WordPress 後台上傳圖片，自動壓縮並儲存至自訂資料夾，並產生可插入的 Shortcode，支援多檔上傳與資料夾自動補完。
-Version: 1.2
+Description: 從 WordPress 後台上傳圖片，自動壓縮並儲存至自訂資料夾，並產生可插入的 Shortcode，支援多檔上傳、壓縮比例調整與資料夾自動補完。
+Version: 1.3
 Author: Wayn Liu
 */
 
@@ -38,11 +38,15 @@ function image_uploader_admin_page() {
     echo '<div class="wrap"><h1>Image Uploader</h1>';
 
     $overwrite = isset($_POST['overwrite_existing']) ? true : false;
+    $quality = isset($_POST['quality']) ? intval($_POST['quality']) : 75;
+
     echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:20px;">';
     echo '<label><strong>選擇圖片（可多選）：</strong></label><br>';
     echo '<input type="file" name="photo_uploads[]" accept="image/*" multiple required><br><br>';
     echo '<label><strong>儲存至資料夾：</strong>（相對於 wp-content）</label><br>';
     echo '<input type="text" name="target_folder" list="folder_suggestions" value="Photos" style="width:300px;" required><br><br>';
+    echo '<label><strong>JPEG 壓縮比例（10～100）：</strong></label><br>';
+    echo '<input type="number" name="quality" min="10" max="100" value="' . esc_attr($quality) . '" style="width:100px;" required><br><br>';
     echo '<label><input type="checkbox" name="overwrite_existing"> 若已存在則覆蓋</label><br><br>';
     echo '<button type="submit" class="button button-primary">上傳並壓縮</button>';
     echo '</form>';
@@ -85,7 +89,7 @@ function image_uploader_admin_page() {
             }
 
             $src = ($ext === 'png') ? imagecreatefrompng($tmp) : imagecreatefromjpeg($tmp);
-            imagejpeg($src, $save_path, 75);
+            imagejpeg($src, $save_path, $quality);
             imagedestroy($src);
 
             $url_path = $folder . '/' . $safe_name;
