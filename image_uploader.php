@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Image Uploader
-Description: 從 WordPress 後台上傳圖片，自動壓縮並儲存至自訂資料夾，並產生可插入的 Shortcode，支援多檔上傳、壓縮比例調整與資料夾自動補完。
+Description: 從 WordPress 後台上傳圖片，自動壓縮並儲存至自訂資料夾，並產生可插入的 Shortcode，支援多檔上傳、資料夾自動補完，並轉換為 WebP。
 Version: 1.3
 Author: Wayn Liu
 */
@@ -38,15 +38,11 @@ function image_uploader_admin_page() {
     echo '<div class="wrap"><h1>Image Uploader</h1>';
 
     $overwrite = isset($_POST['overwrite_existing']) ? true : false;
-    $quality = isset($_POST['quality']) ? intval($_POST['quality']) : 75;
-
     echo '<form method="post" enctype="multipart/form-data" style="margin-bottom:20px;">';
     echo '<label><strong>選擇圖片（可多選）：</strong></label><br>';
     echo '<input type="file" name="photo_uploads[]" accept="image/*" multiple required><br><br>';
     echo '<label><strong>儲存至資料夾：</strong>（相對於 wp-content）</label><br>';
     echo '<input type="text" name="target_folder" list="folder_suggestions" value="Photos" style="width:300px;" required><br><br>';
-    echo '<label><strong>JPEG 壓縮比例（10～100）：</strong></label><br>';
-    echo '<input type="number" name="quality" min="10" max="100" value="' . esc_attr($quality) . '" style="width:100px;" required><br><br>';
     echo '<label><input type="checkbox" name="overwrite_existing"> 若已存在則覆蓋</label><br><br>';
     echo '<button type="submit" class="button button-primary">上傳並壓縮</button>';
     echo '</form>';
@@ -82,6 +78,8 @@ function image_uploader_admin_page() {
 
             $safe_name = basename($name);
             $save_path = $target_path . '/' . $safe_name;
+            $webp_name = preg_replace('/\.[^.]+$/', '.webp', $safe_name);
+            $webp_path = $target_path . '/' . $webp_name;
 
             if (file_exists($save_path) && !$overwrite) {
                 echo "<p style='color:orange;'>⚠️ 檔案 <strong>$safe_name</strong> 已存在，已跳過。</p>";
@@ -89,14 +87,18 @@ function image_uploader_admin_page() {
             }
 
             $src = ($ext === 'png') ? imagecreatefrompng($tmp) : imagecreatefromjpeg($tmp);
-            imagejpeg($src, $save_path, $quality);
+            imagejpeg($src, $save_path, 75);
+            imagewebp($src, $webp_path, 75);
             imagedestroy($src);
 
             $url_path = $folder . '/' . $safe_name;
-            $img_url = content_url($url_path);
+            $webp_url_path = $folder . '/' . $webp_name;
 
             echo "<p><strong>$safe_name</strong><br>";
-            echo "<img src='$img_url' style='max-width:300px;border-radius:8px;'><br>";
+            echo "<picture>";
+            echo "<source srcset='" . content_url($webp_url_path) . "' type='image/webp'>";
+            echo "<img src='" . content_url($url_path) . "' style='max-width:300px;border-radius:8px;'>";
+            echo "</picture><br>";
             echo "<code>$url_path</code><br>";
             echo "📌 Shortcode: <code>[img file=\"$url_path\"]</code></p>";
         }
@@ -108,5 +110,6 @@ function image_uploader_admin_page() {
 add_shortcode('img', function($atts) {
     $atts = shortcode_atts(['file' => ''], $atts);
     $url = content_url($atts['file']);
-    return "<img src='$url' loading='lazy' style='max-width:100%;height:auto;border-radius:8px;'>";
+    $webp_url = preg_replace('/\.[^.]+$/', '.webp', $url);
+    return "<picture><source srcset='$webp_url' type='image/webp'><img src='$url' loading='lazy' style='max-width:100%;height:auto;border-radius:8px;'></picture>";
 });
