@@ -13,7 +13,7 @@
 
 ## 🔧 安裝方式
 
-1. 將整個資料夾上傳到 `wp-content/plugins/` 目錄中。
+1. 將整個資料夾上傳到 `wp-content/plugins/` 目錄中 or 用Wordpress的後台下載外掛。
 2. 在 WordPress 後台啟用 Plugin。
 3. 點擊左側選單的「圖片上傳工具」，開始使用。
 
